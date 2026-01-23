@@ -42,6 +42,7 @@ set(src_crypto
     ecp_curves_new.c
     entropy.c
     entropy_poll.c
+    entropy_wiiu.c
     error.c
     gcm.c
     hkdf.c

@@ -49,6 +49,10 @@
 
 #endif /* MBEDTLS_HAVE_TIME_DATE && !MBEDTLS_PLATFORM_GMTIME_R_ALT */
 
+#ifdef __WIIU__
+#undef THREADING_USE_GMTIME
+#endif
+
 #if defined(MBEDTLS_THREADING_PTHREAD)
 static void threading_mutex_init_pthread(mbedtls_threading_mutex_t *mutex)
 {
@@ -110,7 +114,73 @@ int (*mbedtls_mutex_unlock)(mbedtls_threading_mutex_t *) = threading_mutex_unloc
  */
 #define MUTEX_INIT  = { PTHREAD_MUTEX_INITIALIZER, 1 }
 
-#endif /* MBEDTLS_THREADING_PTHREAD */
+#elif defined(MBEDTLS_THREADING_WIIU)
+#include <coreinit/atomic.h>
+#include <coreinit/thread.h>
+#include <coreinit/time.h>
+
+enum wiiu_mutex_state {
+    WIIU_MUTEX_NOT_INIT     = 0,
+    WIIU_MUTEX_INITIALIZING = 1,
+    WIIU_MUTEX_INITIALIZED  = 2
+};
+
+static void threading_mutex_init_wiiu(mbedtls_threading_mutex_t *mutex)
+{
+    if (!mutex)
+        return;
+
+    OSInitMutex(&mutex->mutex);
+    if (mutex->state == WIIU_MUTEX_INITIALIZING)
+        while (!OSCompareAndSwapAtomic(&mutex->state,
+                                       WIIU_MUTEX_INITIALIZING,
+                                       WIIU_MUTEX_INITIALIZED))
+            ;
+}
+
+static void threading_mutex_free_wiiu(mbedtls_threading_mutex_t *mutex)
+{
+    if (mutex)
+        memset(mutex, 0, sizeof *mutex);
+}
+
+static int threading_mutex_lock_wiiu(mbedtls_threading_mutex_t *mutex)
+{
+    if (!mutex)
+        return MBEDTLS_ERR_THREADING_BAD_INPUT_DATA;
+
+    while (mutex->state != WIIU_MUTEX_INITIALIZED) {
+        /* Exactly one thread must initialize this mutex. */
+        if (OSCompareAndSwapAtomic(&mutex->state,
+                                   WIIU_MUTEX_NOT_INIT,
+                                   WIIU_MUTEX_INITIALIZING)) {
+            threading_mutex_init_wiiu(mutex);
+            break;
+        } else {
+            /* Make other threads sleep a bit. */
+            OSSleepTicks(OSMicrosecondsToTicks(100));
+        }
+    }
+
+    OSLockMutex(&mutex->mutex);
+    return 0;
+}
+
+static int threading_mutex_unlock_wiiu(mbedtls_threading_mutex_t *mutex)
+{
+    if (!mutex)
+        return MBEDTLS_ERR_THREADING_BAD_INPUT_DATA;
+
+    OSUnlockMutex(&mutex->mutex);
+    return 0;
+}
+
+void (*mbedtls_mutex_init)(mbedtls_threading_mutex_t *) = threading_mutex_init_wiiu;
+void (*mbedtls_mutex_free)(mbedtls_threading_mutex_t *) = threading_mutex_free_wiiu;
+int (*mbedtls_mutex_lock)(mbedtls_threading_mutex_t *) = threading_mutex_lock_wiiu;
+int (*mbedtls_mutex_unlock)(mbedtls_threading_mutex_t *) = threading_mutex_unlock_wiiu;
+
+#endif /* MBEDTLS_THREADING_PTHREAD, MBEDTLS_THREADING_WIIU */
 
 #if defined(MBEDTLS_THREADING_ALT)
 static int threading_mutex_fail(mbedtls_threading_mutex_t *mutex)

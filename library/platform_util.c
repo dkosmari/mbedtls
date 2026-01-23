@@ -173,6 +173,10 @@ void mbedtls_zeroize_and_free(void *buf, size_t len)
              ( defined(_POSIX_THREAD_SAFE_FUNCTIONS ) && \
                 _POSIX_THREAD_SAFE_FUNCTIONS >= 200112L ) ) */
 
+#ifdef __WIIU__
+#undef PLATFORM_UTIL_USE_GMTIME
+#endif
+
 struct tm *mbedtls_platform_gmtime_r(const mbedtls_time_t *tt,
                                      struct tm *tm_buf)
 {
@@ -256,6 +260,13 @@ mbedtls_ms_time_t mbedtls_ms_time(void)
     current_ms = ((mbedtls_ms_time_t) ct.dwLowDateTime +
                   ((mbedtls_ms_time_t) (ct.dwHighDateTime) << 32LL))/10000;
     return current_ms;
+}
+#elif defined(__WIIU__)
+#include <coreinit/time.h>
+mbedtls_ms_time_t mbedtls_ms_time(void)
+{
+    /* Note: this is the monotonic boot time. */
+    return OSTicksToMilliseconds(OSGetSystemTime());
 }
 #else
 #error "No mbedtls_ms_time available"

@@ -200,7 +200,7 @@ static int entropy_gather_internal(mbedtls_entropy_context *ctx)
     int ret = MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
     int i;
     int have_one_strong = 0;
-    unsigned char buf[MBEDTLS_ENTROPY_MAX_GATHER];
+    _Alignas(_Alignof(uint32_t)) unsigned char buf[MBEDTLS_ENTROPY_MAX_GATHER];
     size_t olen;
 
     if (ctx->source_count == 0) {

@@ -21,7 +21,8 @@
 
 #if !defined(unix) && !defined(__unix__) && !defined(__unix) && \
     !defined(__APPLE__) && !defined(_WIN32) && !defined(__QNXNTO__) && \
-    !defined(__HAIKU__) && !defined(__midipix__)
+    !defined(__HAIKU__) && !defined(__midipix__) && \
+    !defined(__WIIU__)
 #error "This module only works on Unix and Windows, see MBEDTLS_NET_C in mbedtls_config.h"
 #endif
 
@@ -71,6 +72,13 @@ static int wsa_init_done = 0;
 #include <fcntl.h>
 #include <netdb.h>
 #include <errno.h>
+
+/* Note: WUT should define this macro in sys/socket.h */
+#ifdef __WIIU__
+#ifndef __socklen_t_defined
+#define __socklen_t_defined
+#endif
+#endif
 
 #define IS_EINTR(ret) ((ret) == EINTR)
 #define SOCKET int
@@ -406,6 +414,7 @@ int mbedtls_net_accept(mbedtls_net_context *bind_ctx,
             }
 
             memcpy(client_ip, &addr4->sin_addr.s_addr, *cip_len);
+#ifdef AF_INET6
         } else {
             struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *) &client_addr;
             *cip_len = sizeof(addr6->sin6_addr.s6_addr);
@@ -415,6 +424,7 @@ int mbedtls_net_accept(mbedtls_net_context *bind_ctx,
             }
 
             memcpy(client_ip, &addr6->sin6_addr.s6_addr, *cip_len);
+#endif
         }
     }
 

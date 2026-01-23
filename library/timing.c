@@ -15,7 +15,8 @@
 
 #if !defined(unix) && !defined(__unix__) && !defined(__unix) && \
     !defined(__APPLE__) && !defined(_WIN32) && !defined(__QNXNTO__) && \
-    !defined(__HAIKU__) && !defined(__midipix__)
+    !defined(__HAIKU__) && !defined(__midipix__) && \
+    !defined(__WIIU__)
 #error "This module only works on Unix and Windows, see MBEDTLS_TIMING_C in mbedtls_config.h"
 #endif
 
@@ -28,6 +29,12 @@ struct _hr_time {
     LARGE_INTEGER start;
 };
 
+#elif defined(__WIIU__)
+#include <coreinit/time.h>
+
+struct _hr_time {
+    OSTime start;
+};
 #else
 
 #include <unistd.h>
@@ -78,6 +85,20 @@ unsigned long mbedtls_timing_get_timer(struct mbedtls_timing_hr_time *val, int r
         delta = (unsigned long) ((now.QuadPart - t->start.QuadPart) * 1000ul
                                  / hfreq.QuadPart);
         return delta;
+    }
+}
+
+#elif defined(__WIIU__)
+
+unsigned long mbedtls_timing_get_timer(struct mbedtls_timing_hr_time *val, int reset)
+{
+    struct _hr_time *t = (struct _hr_time *) val;
+    if (reset) {
+        t->start = OSGetSystemTime();
+        return 0;
+    } else {
+        OSTime now = OSGetSystemTime();
+        return (unsigned long)OSTicksToMilliseconds(now - t->start);
     }
 }
 
