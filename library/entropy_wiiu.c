@@ -1,7 +1,8 @@
 /*
  *  Entropy source for the Wii U
  *
- *  Copyright Daniel K. O.
+ *  Copyright 2025  Daniel K. O. <github.com/dkosmari>
+ *
  *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
  */
 
@@ -23,7 +24,9 @@ uint32_t T(uint32_t x)
 }
 
 int mbedtls_hardware_poll(void *data,
-                          unsigned char *output, size_t len, size_t *olen)
+                          unsigned char *output,
+                          size_t len,
+                          size_t *olen)
 {
     /*
      * This is an implementation of std::seed_seq.
@@ -33,7 +36,7 @@ int mbedtls_hardware_poll(void *data,
      * - condense a large number of random numbers to a smaller array.
      */
     /* We only use the two halfs of OSGetTime() as entropy bits, so s=2, v[2]. */
-    /* If Aroma implements a RandomModule, we could use that instead. */
+    /* If Aroma ever implements a RandomPoolModule, we can use that instead. */
     const uint64_t now = OSGetTime();
     static const size_t s = 2;
     const uint32_t v[2] = { (uint32_t) (now >> 0), (uint32_t) (now >> 32) };

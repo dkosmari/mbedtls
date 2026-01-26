@@ -2179,18 +2179,7 @@
  *
  * Uncomment this to enable pthread mutexes.
  */
-//#define MBEDTLS_THREADING_PTHREAD
-
-/**
- * \def MBEDTLS_THREADING_WIIU
- *
- * Enable the Wii U wrapper for the threading layer.
- *
- * Requires: MBEDTLS_THREADING_C
- *
- * Uncomment this to enable Wii U mutexes.
- */
-#define MBEDTLS_THREADING_WIIU
+#define MBEDTLS_THREADING_PTHREAD
 
 /**
  * \def MBEDTLS_USE_PSA_CRYPTO

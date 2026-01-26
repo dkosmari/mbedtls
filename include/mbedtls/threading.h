@@ -37,24 +37,6 @@ typedef struct mbedtls_threading_mutex_t {
     char MBEDTLS_PRIVATE(state);
 
 } mbedtls_threading_mutex_t;
-#elif defined(MBEDTLS_THREADING_WIIU)
-#include <coreinit/mutex.h>
-typedef struct mbedtls_threading_mutex_t {
-    union {
-        struct {
-            OSMutex MBEDTLS_PRIVATE(mutex);
-            /*
-             * state == 0: mutex is not initialized
-             * state == 1: one thread is initializing the mutex
-             * state == 2: mutex is initialized
-             */
-            volatile uint32_t state;
-        };
-
-        /* This is just to ensure good cache alignment for the mutex. */
-        char padding[64];
-    };
-} mbedtls_threading_mutex_t;
 #endif
 
 #if defined(MBEDTLS_THREADING_ALT)

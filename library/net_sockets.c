@@ -73,13 +73,6 @@ static int wsa_init_done = 0;
 #include <netdb.h>
 #include <errno.h>
 
-/* Note: WUT should define this macro in sys/socket.h */
-#ifdef __WIIU__
-#ifndef __socklen_t_defined
-#define __socklen_t_defined
-#endif
-#endif
-
 #define IS_EINTR(ret) ((ret) == EINTR)
 #define SOCKET int
 
